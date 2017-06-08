@@ -1,0 +1,319 @@
+﻿///$tab Main
+SET ThousandSep=',';
+SET DecimalSep='.';
+SET MoneyThousandSep=',';
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$#,##0.00;($#,##0.00)';
+SET TimeFormat='h:mm:ss TT';
+SET DateFormat='M/D/YYYY';
+SET TimestampFormat='M/D/YYYY h:mm:ss[.fff] TT';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-US';
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+
+set mShowsheet=0;
+//set mTotalSalesAmt = "=sum({1<Brname=>} SaleAmt)";
+
+//set mTotalSalesAmt = "=sum({1<Division & ' ' & Brname=>} SaleAmt)"; 
+set mTotalSalesAmt = "=sum({1<Division=,Brname=>} SaleAmt)"; 
+/*
+MDs:
+LOAD * Inline [
+MDID, MDName
+1, MD1
+2, MD2
+3, MD3
+];
+
+Clusters:
+LOAD * Inline [
+ClusterID, ClusterName, MDID
+1, ClusterN,1
+2, ClusterE,3
+3, ClusterW,1
+4, ClusterS,2
+];
+
+Divisions:
+LOAD * Inline [
+DivID, Division, ClusterID
+1, North, 4
+2, East, 3
+3, West, 2
+4, South, 1
+];
+
+temp:
+Mapping LOAD * inline [
+DivID, xName
+1, BlrNorth
+2, BlrEast
+3, BlrWest
+4, BlrSouth
+];
+
+map Divisions using temp;
+
+
+Branches:
+LOAD * Inline [
+BrID, Brname, DivID
+1, Branch1, 1
+2, Branch2, 1
+3, Branch3, 1
+4, Branch4, 1
+5, Branch1, 2
+6, Branch2, 2
+7, Branch3, 2
+8, Branch4, 2
+];
+*/
+
+MDs:
+LOAD MDID, MDName
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is MDS);
+
+Clusters:
+LOAD ClusterID, ClusterName, MDID
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Clusters);
+
+Divisions:
+LOAD DIVID, [Division Name], ClusterID
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Divisions);
+
+Branches:
+LOAD BrID, Brname, DIVID
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Branches);
+
+Product:
+LOAD ProdID, ProdName
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Product);
+
+SalesFact:
+LOAD * from SalesFact.qvd(qvd);
+/*
+LOAD ProdID, SaleDate, Price, AgentID, BrID, 1 as Qty, year(SaleDate) as SaleYear;
+LOAD AppleID as ProdID, SaleDate, SaleAmt * 2 as Price, AgentID, BrID, 1 as Qty
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Sales);
+
+STORE * from SalesFact into SalesFact.qvd;
+*/
+
+
+
+
+Agents:
+//Directory;
+LOAD AgentID, AgentName, DivID as Div_ID
+FROM [..\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Agents);
+
+
+
+
+
+
+//SQL here
+//Oracle
+//Any database
+
+///$tab Main 3
+
+
+//data massageing
+Tab1:
+Mapping LOAD * inline [
+myPlace, xname
+U.S.A , USA
+US, USA
+Bangalore, Bangalore
+Bengaluru, Bangalore
+Blr, Bangalore
+Bnglr, Bangalore
+Bngluru, Bangalore
+];
+
+
+MAP myPlace using Tab1;
+
+tab2:		//supplier master
+LOAD * inline [
+myPlace, name
+U.S.A,  Ramachandra
+US, Girish
+Bangalore, Robert
+Bengaluru, Kishore
+Blr, Thukral
+Bnglr, Singh
+Bngluru, Harsimrat
+Mysore, Mr420
+Mysuru, Jadeja
+];
+
+
+///$tab Concatenation
+TabSales1:
+LOAD * Inline [
+TrID, TrDate, TrAmt, TrType, ClusterID
+1, 5/1/2017, 1299, S, EAST
+2, 5/3/2017, 1099, S, WEST
+3, 5/4/2017, 1499, S, NORTH
+4, 5/2/2017, 1299, S
+5, 5/1/2017, 222, P
+6, 5/3/2017, 1199, P
+];
+
+//NoConcatenate
+//RENAME Field TrID to TrID1;
+//TRid as TrID1
+
+Concatenate
+
+
+TabSales2:
+LOAD * Inline [
+TrID, TrDate1, TrAmt1, TrType1
+1, 5/21/2017, 255, S
+2, 5/23/2017, 300, S
+3, 5/24/2017, 450, S
+4, 5/22/2017, 200, S
+];
+
+/*
+t1:
+load * Inline [ 
+A,B,C
+1,100,blr
+2,200,hubli
+3,440,mysore
+];
+
+
+t2:
+LOAD * Inline [
+B,X,P
+100,x1,p1
+200,x2,p2
+440,x3,p3
+];
+
+
+t3:
+LOAD * Inline [
+C,M,P
+c1,m1,p1
+c2,m2,p2
+c3,m3,p3
+c4,m4,p3
+c5,m5,p2
+];
+
+
+//LOOSEN Table t2;
+*/
+///$tab join
+TabJoin1:
+LOAD * Inline [
+Empno, Empname
+1, Harsimrat Thukral
+2, Sheshadri
+3, Muarli
+4, Basappa
+5, Katappa
+6, Ram
+];
+
+JOIN (TabJoin1) //JOIN IS BY DEFULT CONSIDERED AS OUTER JOIN
+//THERE ARE 4 JOINS IN QLIKVIEW
+//OUTER JOIN = join also
+//INNER JOIN
+//LEFT JOIN
+//RIGHT JOIN
+
+TabJoin2:
+LOAD * Inline [
+Empno, Address, Place
+1, Plot No 2333 Sector 46,  Chandigarh
+2, Near Kamakshi Talkies, Bannergatta
+3, #123 Commercial chambers, Davangere
+4, Hanumanthppa Palya, Darwar
+5, Osio enclave, Chennai
+
+];
+
+
+///$tab Crossjoin
+myCrossJoin:
+CrossTable(Month,Sales) LOAD Year, Jan, Feb, Mar, Apr, May, Jun
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Crossjoin);
+
+
+myListInfos:
+BUNDLE LOAD * Inline [
+Country, Img
+America, C:\Users\Public\Pictures\Sample Pictures\Chrysanthemum.JPG
+England,C:\Users\Public\Pictures\Sample Pictures\Desert.JPG
+Australia,C:\Users\Public\Pictures\Sample Pictures\Hydrangeas.JPG
+Japan,C:\Users\Public\Pictures\Sample Pictures\Jellyfish.JPG
+China,C:\Users\Public\Pictures\Sample Pictures\Koala.JPG
+Indonesia,C:\Users\Public\Pictures\Sample Pictures\Lighthouse.JPG
+Zekoslovakia,C:\Users\Public\Pictures\Sample Pictures\Penguins.JPG
+India,C:\Users\Public\Pictures\Sample Pictures\Tulips.JPG
+Pakistan, E:\Qlikview12\Pakistan.txt
+];
+///$tab Main 2
+
+//Hierarchy(Node_ID, Parent_ID, NodeName, Parentname, Pathsource, pathname,pathdelimiter, depth)
+
+
+//hierarchy - convert adjacent nodes table into expanded nodes table
+
+Hierarchy_Sales:
+Hierarchy(Node_ID, Parent_ID, Node, ParentName, Node, PathName, "/", Depth) 
+LOAD Node_ID, Parent_ID, Node_Name as Node
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is AdjNodeTable);
+
+Sales:
+LOAD Node_ID,SaleAmt
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Sales);
+
+Branch:
+HierarchyBelongsTo(Node_ID, Parent_ID, Node_Name, BranchID, BranchName)
+LOAD Node_ID, Parent_ID, Node_Name
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is AdjNodeTable);
+
+
+//creates nodelevel  ANCESTOR relationship
+///$tab Main 4
+Adjacent2:
+Hierarchy(Node_id, Parent_id, Node_name, Parentname, Node_name, Pathname, "/", depth) 
+LOAD Node_ID as Node_id, Parent_ID as Parent_id, Node_Name as Node_name
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is AdjNodeTable2);
+
+Census:
+LOAD Node_ID as Node_id, Census
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is Census);
+
+
+/*
+Branch:
+HierarchyBelongsTo(Node_ID, Parent_ID, Node_Name, BranchID, BranchName)
+LOAD Node_ID, Parent_ID, Node_Name
+FROM [E:\Qlikview12\Raw Data\SalesDataSource.xlsx] (ooxml, embedded labels, table is AdjNodeTable);
+
+
+//creates nodelevel  ANCESTOR relationship
+*/
+///$tab Sql Server Data
+//SQl Server instance - Vijaya-pc/sqlexpress
+
+OLEDB CONNECT TO [Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=BI;Data Source=vijaya-pc\sqlexpress;Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Workstation ID=VIJAYA-PC;Use Encryption for Data=False;Tag with column collation when possible=False];
+
+SQLAdjnodetable:
+SQL Select Node_ID NodeID, Parent_ID ParentID, Node_Name NodeName from AdjNodeTable$ ;
+
